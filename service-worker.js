@@ -285,8 +285,9 @@ self.addEventListener('fetch', function(event) {
 
 // Runtime cache configuration, using the sw-toolbox library.
 
-toolbox.router.get(/https:\/\/calendar-api.now.sh\//, toolbox.fastest, {"cache":{"maxEntries":1,"name":"runtime-cache"}});
-toolbox.router.get(/https:\/\/fonts.gstatic.com/, toolbox.fastest, {"cache":{"maxEntries":1,"name":"runtime-cache"}});
+toolbox.router.get(/https:\/\/calendar-api.now.sh\//, toolbox.fastest, {"name":"runtime-cache","maxAgeSeconds":3600});
+toolbox.router.get(/https:\/\/fonts.gstatic.com/, toolbox.fastest, {"name":"runtime-cache","maxAgeSeconds":3600});
+toolbox.router.get(/https:\/\/fonts.googleapis.com/, toolbox.fastest, {"name":"runtime-cache","maxAgeSeconds":3600});
 
 
 
