@@ -2,11 +2,6 @@ header.app__offline {
     background-color: #ffcfcf;
 }
 
-i.material-icons {
-    width: 25px;
-    height: 25px;
-}
-
 .toast__container {
     position: fixed;
     bottom: 20px;
