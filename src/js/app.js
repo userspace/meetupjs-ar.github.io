@@ -2,6 +2,9 @@ const enableOffline = require('./modules/offline')
 const notification = require('./modules/notification')
 const renderMonthlyCalendars = require('./modules/calendar')
 const initMenu = require('./modules/menu')
+const userspace = require('./modules/userspace')
+
+userspace.initialize()
 
 initMenu()
 

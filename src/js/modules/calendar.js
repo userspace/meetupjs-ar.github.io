@@ -3,6 +3,8 @@ const moment = require('moment')
 require('isomorphic-fetch')
 require('moment/locale/es')
 
+const userspace = require('./userspace')
+
 const body = document.querySelector('body')
 const calendarElement = document.querySelector('#calendar')
 const modal = document.querySelector('#modal')
@@ -17,6 +19,9 @@ function toggleModal () {
     modal.classList.toggle('dn')
     modalWrapper.classList.toggle('fadeInDown')
 }
+
+const TWO_DAYS  = 2 * 60 * 60 * 24
+const TWO_HOURS = 2 * 60 * 60
 
 module.exports = function (monthlyCalendar) {
     return new Promise((resolve, reject) => {
@@ -136,14 +141,17 @@ module.exports = function (monthlyCalendar) {
                     list.parentNode.parentNode.parentNode.classList.add('pointer')
                     list.parentNode.parentNode.parentNode.classList.add('js-show-event-modal')
 
+                    const timeToEvent = eventDay.format('X') - Math.floor(Date.now() / 1000)
+
                     list.insertAdjacentHTML(
                         'beforeend',
                         `<li class="b--black-30 ba br1 bw1 f6 mv2 pa1 text-shadow-1 truncate white
                             ${list.childNodes.length > 2 ? 'dn-l' : ''}"
                             data-day="${eventDay.format('dddd DD')}"
                             data-hour="${eventDay.format('HH:mm')}"
+                            data-remain="${timeToEvent > 0 ? timeToEvent : ''}"
                             data-event-name="${event.eventName}"
-                            data-place="${event.place}"
+                            data-place="${event.place || ''}"
                             data-event-link="${event.eventLink}"
                             data-color="${event.color}"
                             style="background-color: ${event.color};">
@@ -172,11 +180,20 @@ module.exports = function (monthlyCalendar) {
 
                     for (let index = 0; index < eventList.length; index++) {
                         const eventData = eventList[index].dataset
-                        let placeHTML = ''
+                        const placeHTML = eventData.place ? `<p class="black-50 mb0 mt2">${eventData.place}</p>` : ''
 
-                        if (eventData.place) {
-                            placeHTML = `<p class="black-50 mb0 mt2">${eventData.place}</p>`
-                        }
+                        const reminderHTML = parseInt(eventData.remain) < TWO_DAYS ?
+                          `<a href="#"
+                              data-day="${eventData.day}"
+                              data-hour="${eventData.hour}"
+                              data-remain="${eventData.remain}"
+                              data-event-name="${eventData.eventName}"
+                              data-place="${eventData.place || ''}"
+                              data-event-link="${eventData.eventLink}"
+                              class="b b--black-30 ba br1 bw1 dib f6 flex grow items-center link mt3 ph3 pv2 ttu white js-register-reminder" style="background-color: ${eventData.color};">
+                                  <i class="b black-20 f5 material-icons mr1">email</i>
+                                  <span class="text-shadow-1">Remind Me</span>
+                          </a>` : ''
 
                         modalContent.insertAdjacentHTML(
                             'beforeend',
@@ -192,11 +209,12 @@ module.exports = function (monthlyCalendar) {
                                     ${placeHTML}
                                     <div class="flex">
                                         <a href="${eventData.eventLink}"
-                                            target="_blank"
+                                            target="_blank" rel="noopener"
                                             class="b b--black-30 ba br1 bw1 dib f6 flex grow items-center link mt3 ph3 pv2 ttu white" style="background-color: ${eventData.color};">
                                                 <i class="b black-20 f5 material-icons mr1">link</i>
                                                 <span class="text-shadow-1">Link</span>
                                         </a>
+                                        ${reminderHTML}
                                     </div>
                                 </div>
                             </div>`
@@ -204,6 +222,27 @@ module.exports = function (monthlyCalendar) {
                     }
 
                     toggleModal()
+
+                    const reminders = document.querySelectorAll('.js-register-reminder')
+
+                    for (let i = 0; i < reminders.length; i++) {
+                        reminders[i].addEventListener('click', function (event) {
+                            event.preventDefault()
+
+                            const currentCell = event.currentTarget
+                            const eventData = currentCell.dataset
+
+                            const delay = parseInt(eventData.remain)
+                            userspace.reminder(
+                                eventData.eventName,
+                                eventData.place || 'A definir',
+                                `${eventData.day} ${eventData.hour}`,
+                                `Mas información en ${eventData.eventLink}.`,
+                                delay - TWO_HOURS
+                            )
+                        })
+                    }
+
                 })
             }
 
