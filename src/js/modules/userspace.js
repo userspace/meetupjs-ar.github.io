@@ -1,22 +1,31 @@
 
 
 const initialize = () => {
-    //1. update user token identification
-    const token = (window.location.search.match(/[\?&]token=([a-zA-Z0-9\.-_]+)[#&]?/) || []).pop()
-    if (!token) {
-        delete localStorage.id_token
-    } else {
-        localStorage.id_token = token
-    }
-    const isLoggedIn = !!localStorage.id_token
-
-    //2. update login button
     const loginElement = document.querySelector('a.bg-userspace-login')
     loginElement.href = `https://gateway.user.space/sign/${applicationId()}`
-    if (isLoggedIn) {
-        loginElement.querySelector('span').textContent = 'Change user'
+
+    //1. update user token identification
+    const token = (window.location.search.match(/[\?&]token=([a-zA-Z0-9\.-\_]+)[#&]?/) || []).pop() || localStorage.id_token
+    let payload
+
+    try {
+        if (!token) throw Error('no token')
+        payload = JSON.parse(atob(token.split('.')[1].replace('_','/').replace('-','+')))
+        if (payload.exp < Math.round(Date.now() / 1000)) throw Error('token expired')
+    } catch (ex) {
+        //eslint-disable-next-line no-console
+        console.warn(ex)
+        delete localStorage.id_token
+        return
     }
 
+    localStorage.id_token = token
+
+    //2. update login button
+    loginElement.querySelector('span').textContent = 'Change user'
+
+    //eslint-disable-next-line no-undef
+    mixpanel.track('login',{ user: payload.sub })
 }
 
 const login = () => {
@@ -35,10 +44,13 @@ const reminder = (name, place, time, description, delay) => fetch('https://gatew
     })
 })
 
+const tracked_reminder = (...args) => reminder(args)
+//eslint-disable-next-line no-undef
+    .then(() => mixpanel.track('reminder',{args}))
 
 module.exports = {
     initialize,
     login,
     applicationId,
-    reminder,
+    reminder: tracked_reminder,
 }
