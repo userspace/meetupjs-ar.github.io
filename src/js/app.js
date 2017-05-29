@@ -24,3 +24,6 @@ fetch(process.env.CALENDAR_API)
     .then(notification)
     .then(renderMonthlyCalendars)
     .catch(handleError)
+
+//eslint-disable-next-line no-undef
+mixpanel.track('init app', { url : window.location.href })
